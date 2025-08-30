@@ -8,3 +8,12 @@ bots:
   scouty:
     description: "Ops helper"
     skills_path: "skills/default.yaml"
+  Cookie:
+    description: "Real-time trading agent. Scales the market, executes trades at 80%+ success rate, self-upgrades and fixes bugs."
+    skills_path: "skills/cookie.yaml"
+  Rusty:
+    description: "Automates all social media tasks: writes scripts, generates and uploads videos, manages posts."
+    skills_path: "skills/rusty.yaml"
+  Browny:
+    description: "Playful analyst"
+    skills_path: "skills/default.yaml"
