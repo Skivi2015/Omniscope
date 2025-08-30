@@ -1,0 +1,1 @@
+\nfrom scaling import build_agent\n\ndef test_default_route_python_when_unknown():\n    a = build_agent("scouty", "skills/default.yaml")\n    out = a.solve("compute 1+1")\n    assert out["transcript"], "no transcript"\n
