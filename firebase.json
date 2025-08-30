@@ -1,0 +1,14 @@
+{
+  "hosting": {
+    "public": "web",
+    "rewrites": [
+      {
+        "source": "/solve",
+        "function": "api"
+      }
+    ]
+  },
+  "functions": {
+    "source": "functions"
+  }
+}
