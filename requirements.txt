@@ -1,1 +1,3 @@
-\nfastapi\nuvicorn[standard]\nPyYAML\n
+fastapi
+uvicorn[standard]
+PyYAML
