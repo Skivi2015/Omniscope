@@ -1,0 +1,2 @@
+{"ts": 1756551973.8533218, "task": "fetch https://httpbin.org/json", "step": "fetch https://httpbin", "tool": "http", "success": false, "output": null, "error": "http error: <urlopen error [Errno -5] No address associated with hostname>"}
+{"ts": 1756551975.053986, "task": "fetch https://httpbin.org/json", "step": "org/json", "tool": "json", "success": false, "output": null, "error": "json error: Expecting value: line 1 column 1 (char 0)"}

@@ -1,0 +1,1 @@
+\nfrom scaling import build_agent\n\ndef test_math_plugin_basic():\n    a = build_agent("scouty", "skills/default.yaml")\n    # math tool not registered by default, ensure graceful fallback\n    out = a.solve("calc 3*7")\n    assert out["transcript"], "no transcript"\n

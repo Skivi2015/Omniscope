@@ -1,0 +1,66 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - '**/*.py'
+      - 'Dockerfile'
+      - 'requirements.txt'
+      - 'bots.yaml'
+      - '.github/workflows/cloud-run-deploy.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  id-token: write   # Workload Identity Federation
+
+concurrency:
+  group: cloudrun-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  SERVICE_NAME: ${{ vars.CLOUD_RUN_SERVICE || 'omniscope' }}
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: ${{ secrets.GCP_REGION || 'us-central1' }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Resolve defaults
+        run: |
+          REGION=${REGION:-us-central1}
+          SERVICE_NAME=${SERVICE_NAME:-omniscope}
+          echo "REGION=$REGION" >> $GITHUB_ENV
+          echo "SERVICE_NAME=$SERVICE_NAME" >> $GITHUB_ENV
+
+      - name: Build and push image with Cloud Build
+        run: |
+          IMAGE="gcr.io/${PROJECT_ID}/${SERVICE_NAME}:${GITHUB_SHA}"
+          gcloud builds submit --tag "$IMAGE" .
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy "$SERVICE_NAME" \
+            --image "$IMAGE" \
+            --region "$REGION" \
+            --platform managed \
+            --allow-unauthenticated
+
+      - name: Output Service URL
+        run: |
+          gcloud run services describe "$SERVICE_NAME" --region "$REGION" --format='value(status.url)'

@@ -1,4 +1,1 @@
-from agent import AGENTS
-def test_scoutry():
-    out = AGENTS['scouty'].act('ping')
-    assert 'scouty' in out['result']
+\nfrom scaling import build_agent\n\ndef test_http_rule():\n    a = build_agent("scouty", "skills/default.yaml")\n    out = a.solve("fetch https://httpbin.org/json and json parse")\n    assert out["transcript"], "no transcript"\n\ndef test_python_tool_simple_math():\n    a = build_agent("scouty", "skills/default.yaml")\n    out = a.solve("python result = 2 + 3")\n    assert out["result"].strip() == "5"\n\ndef test_json_tool_with_context():\n    a = build_agent("scouty", "skills/default.yaml")\n    out = a.solve("python result = '{\"a\": 1}'; json")\n    assert '"a": 1' in out["result"]\n

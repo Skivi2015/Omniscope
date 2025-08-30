@@ -1,0 +1,1 @@
+\nimport yaml\n\ndef test_skills_yaml_parses():\n    with open("skills/default.yaml", "r", encoding="utf-8") as f:\n        doc = yaml.safe_load(f)\n    assert isinstance(doc, dict) and "rules" in doc and isinstance(doc["rules"], list) and len(doc["rules"]) > 0\n
