@@ -1,0 +1,13 @@
+rules:
+  - name: write_script
+    if_contains: ["write script", "caption", "post text", "social copy", "generate content"]
+    prefer_tool: content_gen
+  - name: video_upload
+    if_contains: ["upload video", "publish video", "post video", "video"]
+    prefer_tool: video_uploader
+  - name: schedule_post
+    if_contains: ["schedule", "queue", "timed post", "calendar"]
+    prefer_tool: scheduler
+  - name: manage_account
+    if_contains: ["account", "profile", "stats", "analytics", "manage"]
+    prefer_tool: social_api
