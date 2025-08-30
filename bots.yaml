@@ -1,6 +1,10 @@
-seomi:
-  desc: Search and summarize web pages
-soshie:
-  desc: Social media scraper
-scouty:
-  desc: General-purpose fetch and parse bot
+bots:
+  seomi:
+    description: "SEO content helper"
+    skills_path: "skills/default.yaml"
+  soshie:
+    description: "Social media helper"
+    skills_path: "skills/default.yaml"
+  scouty:
+    description: "Ops helper"
+    skills_path: "skills/default.yaml"

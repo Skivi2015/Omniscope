@@ -23,3 +23,7 @@ Firebase
 cd functions && npm i && npm run build
 Set env: firebase functions:config:set run.url="https://<cloud-run-url>"
 firebase deploy --only functions,hosting
+
+PyPI Release
+------------
+On GitHub Release "published", CI builds the package and publishes to PyPI using Trusted Publishing. See .github/workflows/pypi-publish.yml.
