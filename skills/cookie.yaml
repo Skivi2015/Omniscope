@@ -1,0 +1,17 @@
+rules:
+  - name: market_data_fetch
+    if_contains: ["market", "price", "ticker", "quote", "realtime", "trend"]
+    prefer_tool: http
+    params:
+      timeout: 5
+  - name: trade_execute
+    if_contains: ["trade", "buy", "sell", "execute", "order"]
+    prefer_tool: trading_api
+    params:
+      expected_success_rate: 0.8
+  - name: self_upgrade
+    if_contains: ["upgrade", "update", "fix", "patch", "self-upgrade"]
+    prefer_tool: self_upgrade
+  - name: bug_fix
+    if_contains: ["bug", "error", "exception", "fix bug", "debug"]
+    prefer_tool: bug_fixer
