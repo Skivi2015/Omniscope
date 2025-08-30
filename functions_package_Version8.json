@@ -1,0 +1,11 @@
+{
+  "name": "omniscope-functions",
+  "description": "Firebase Functions proxy to Cloud Run",
+  "dependencies": {
+    "firebase-functions": "^4.0.0",
+    "node-fetch": "^2.6.7"
+  },
+  "engines": {
+    "node": "18"
+  }
+}
