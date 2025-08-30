@@ -1,0 +1,1 @@
+\nfrom scaling import build_agent\n\ndef test_semicolon_step_split():\n    a = build_agent("scouty", "skills/default.yaml")\n    out = a.solve("python result = '{\"x\":1}'; json")\n    assert '"x": 1' in out["result"]\n

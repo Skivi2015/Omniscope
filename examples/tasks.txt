@@ -1,0 +1,1 @@
+\nfetch https://httpbin.org/json and json parse\npython result = 2 + 2\njson {"a": 1}\n
