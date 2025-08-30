@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html><body>
+<h2>OmniScope Bot Demo</h2>
+<input id='bot' value='scouty'> <input id='task' value='fetch https://httpbin.org/json and json parse'>
+<button onclick='solve()'>Solve</button>
+<pre id='result'></pre>
+<script>
+function solve() {
+  fetch('/solve', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bot:bot.value,task:task.value})})
+  .then(r=>r.json()).then(d=>result.textContent=JSON.stringify(d,null,2))
+}
+</script>
+</body></html>
