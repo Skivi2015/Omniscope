@@ -1,18 +1,1 @@
-rules:
-  - name: http_get
-    if_contains: ["http", "https", "fetch", "download"]
-    prefer_tool: http
-    params:
-      method: "GET"
-      timeout: 10
-  - name: run_python
-    if_contains: ["python", "compute", "code"]
-    prefer_tool: python
-    params:
-      timeout: 3
-  - name: json_transform
-    if_contains: ["json", "parse", "transform"]
-    prefer_tool: json
-  - name: math_expr
-    if_contains: ["math", "calc"]
-    prefer_tool: math
+\nrules:\n  - name: http_get\n    if_contains: ["http", "https", "fetch", "download"]\n    prefer_tool: http\n    params:\n      method: "GET"\n      timeout: 10\n  - name: run_python\n    if_contains: ["python", "compute", "code"]\n    prefer_tool: python\n    params:\n      timeout: 3\n  - name: json_transform\n    if_contains: ["json", "parse", "transform"]\n    prefer_tool: json\n  - name: math_expr\n    if_contains: ["math", "calc"]\n    prefer_tool: math\n
