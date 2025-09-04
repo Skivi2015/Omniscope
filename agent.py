@@ -7,6 +7,7 @@ class Agent:
     def act(self, task):
         return {'result': f'{self.name} completed: {task}'}
 def load_agents(yaml_file):
-    bots = yaml.safe_load(open(yaml_file))
+    data = yaml.safe_load(open(yaml_file))
+    bots = data['bots']
     return {name: Agent(name, cfg) for name, cfg in bots.items()}
 AGENTS = load_agents('bots.yaml')
