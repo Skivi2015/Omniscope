@@ -1,13 +1,428 @@
 <!DOCTYPE html>
-<html><body>
-<h2>OmniScope Bot Demo</h2>
-<input id='bot' value='scouty'> <input id='task' value='fetch https://httpbin.org/json and json parse'>
-<button onclick='solve()'>Solve</button>
-<pre id='result'></pre>
-<script>
-function solve() {
-  fetch('/solve', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bot:bot.value,task:task.value})})
-  .then(r=>r.json()).then(d=>result.textContent=JSON.stringify(d,null,2))
-}
-</script>
-</body></html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OmniScope Bots - AI Assistant Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+    <div id="app" class="max-w-4xl mx-auto p-6">
+        <!-- Navigation Header -->
+        <nav class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-blue-400">OmniScope</h1>
+            <div id="nav-buttons" class="space-x-4">
+                <button id="logout-btn" class="hidden bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-white">
+                    Logout
+                </button>
+            </div>
+        </nav>
+
+        <!-- Authentication Section -->
+        <div id="auth-section" class="space-y-6">
+            <div class="bg-slate-900 rounded-lg p-6">
+                <h2 class="text-2xl font-semibold mb-4">Welcome to OmniScope</h2>
+                <p class="text-slate-400 mb-6">Professional AI bot platform with subscription-based access</p>
+                
+                <!-- Login Form -->
+                <div id="login-form" class="space-y-4">
+                    <h3 class="text-xl font-medium">Login</h3>
+                    <div>
+                        <input type="text" id="login-username" placeholder="Username" 
+                               class="w-full p-3 bg-slate-800 border border-slate-700 rounded text-white">
+                    </div>
+                    <div>
+                        <input type="password" id="login-password" placeholder="Password" 
+                               class="w-full p-3 bg-slate-800 border border-slate-700 rounded text-white">
+                    </div>
+                    <button id="login-btn" class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded text-white">
+                        Login
+                    </button>
+                    <p class="text-center">
+                        <span class="text-slate-400">Don't have an account? </span>
+                        <button id="show-register" class="text-blue-400 hover:underline">Register here</button>
+                    </p>
+                </div>
+
+                <!-- Register Form -->
+                <div id="register-form" class="hidden space-y-4">
+                    <h3 class="text-xl font-medium">Register for OmniScope</h3>
+                    <p class="text-slate-400 text-sm">$29.99/month subscription includes access to all AI bots</p>
+                    <div>
+                        <input type="text" id="register-username" placeholder="Username" 
+                               class="w-full p-3 bg-slate-800 border border-slate-700 rounded text-white">
+                    </div>
+                    <div>
+                        <input type="email" id="register-email" placeholder="Email" 
+                               class="w-full p-3 bg-slate-800 border border-slate-700 rounded text-white">
+                    </div>
+                    <div>
+                        <input type="password" id="register-password" placeholder="Password" 
+                               class="w-full p-3 bg-slate-800 border border-slate-700 rounded text-white">
+                    </div>
+                    <button id="register-btn" class="w-full bg-green-600 hover:bg-green-700 p-3 rounded text-white">
+                        Register & Subscribe
+                    </button>
+                    <p class="text-center">
+                        <span class="text-slate-400">Already have an account? </span>
+                        <button id="show-login" class="text-blue-400 hover:underline">Login here</button>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Application (hidden initially) -->
+        <div id="main-app" class="hidden space-y-6">
+            <!-- Subscription Status -->
+            <div id="subscription-info" class="bg-slate-900 rounded-lg p-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-medium">Subscription Status</h3>
+                    <span id="subscription-status" class="px-3 py-1 rounded text-sm"></span>
+                </div>
+                <p id="subscription-message" class="text-slate-400 mt-2"></p>
+                <div id="subscription-actions" class="mt-4 space-x-3 hidden">
+                    <button id="renew-btn" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-white">
+                        Renew Subscription
+                    </button>
+                    <button id="cancel-btn" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-white">
+                        Cancel Subscription
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bot Interface -->
+            <div class="bg-slate-900 rounded-lg p-6">
+                <h3 class="text-xl font-medium mb-4">AI Bot Assistant</h3>
+                <div class="grid md:grid-cols-3 gap-4 mb-6">
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium">Select Bot:</label>
+                        <select id="bot-select" class="w-full p-3 bg-slate-800 border border-slate-700 rounded text-white">
+                            <option value="scouty">Scouty - Ops Helper</option>
+                            <option value="seomi">Seomi - SEO Content Helper</option>
+                            <option value="soshie">Soshie - Social Media Helper</option>
+                            <option value="Cookie">Cookie - Trading Agent</option>
+                            <option value="Rusty">Rusty - Social Media Automation</option>
+                            <option value="Browny">Browny - Playful Analyst</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2 space-y-2">
+                        <label class="block text-sm font-medium">Task:</label>
+                        <input type="text" id="task-input" placeholder="Enter your task..." 
+                               class="w-full p-3 bg-slate-800 border border-slate-700 rounded text-white">
+                    </div>
+                </div>
+                <button id="solve-btn" class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded text-white mb-4">
+                    Execute Task
+                </button>
+                <div id="result-section" class="hidden">
+                    <h4 class="text-lg font-medium mb-2">Result:</h4>
+                    <pre id="result-output" class="bg-slate-800 p-4 rounded text-green-400 overflow-auto max-h-60"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading indicator -->
+        <div id="loading" class="hidden text-center py-4">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
+            <p class="mt-2 text-slate-400">Processing...</p>
+        </div>
+
+        <!-- Error messages -->
+        <div id="error-message" class="hidden bg-red-900 border border-red-700 text-red-100 px-4 py-3 rounded mb-4">
+            <span id="error-text"></span>
+        </div>
+    </div>
+
+    <script>
+        class OmniScopeApp {
+            constructor() {
+                this.token = localStorage.getItem('omniscope_token');
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                if (this.token) {
+                    this.showMainApp();
+                    this.loadSubscriptionStatus();
+                } else {
+                    this.showAuthSection();
+                }
+            }
+
+            bindEvents() {
+                // Auth form toggles
+                document.getElementById('show-register').onclick = () => this.showRegisterForm();
+                document.getElementById('show-login').onclick = () => this.showLoginForm();
+                
+                // Auth actions
+                document.getElementById('login-btn').onclick = () => this.login();
+                document.getElementById('register-btn').onclick = () => this.register();
+                document.getElementById('logout-btn').onclick = () => this.logout();
+                
+                // Subscription actions
+                document.getElementById('renew-btn').onclick = () => this.renewSubscription();
+                document.getElementById('cancel-btn').onclick = () => this.cancelSubscription();
+                
+                // Bot actions
+                document.getElementById('solve-btn').onclick = () => this.solveTask();
+                
+                // Enter key support
+                document.getElementById('task-input').onkeypress = (e) => {
+                    if (e.key === 'Enter') this.solveTask();
+                };
+            }
+
+            showAuthSection() {
+                document.getElementById('auth-section').classList.remove('hidden');
+                document.getElementById('main-app').classList.add('hidden');
+                document.getElementById('logout-btn').classList.add('hidden');
+            }
+
+            showMainApp() {
+                document.getElementById('auth-section').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                document.getElementById('logout-btn').classList.remove('hidden');
+            }
+
+            showRegisterForm() {
+                document.getElementById('login-form').classList.add('hidden');
+                document.getElementById('register-form').classList.remove('hidden');
+            }
+
+            showLoginForm() {
+                document.getElementById('register-form').classList.add('hidden');
+                document.getElementById('login-form').classList.remove('hidden');
+            }
+
+            async login() {
+                const username = document.getElementById('login-username').value;
+                const password = document.getElementById('login-password').value;
+
+                if (!username || !password) {
+                    this.showError('Please enter username and password');
+                    return;
+                }
+
+                this.showLoading(true);
+                try {
+                    const response = await fetch('/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password })
+                    });
+
+                    const data = await response.json();
+                    if (response.ok) {
+                        this.token = data.access_token;
+                        localStorage.setItem('omniscope_token', this.token);
+                        this.showMainApp();
+                        this.loadSubscriptionStatus();
+                    } else {
+                        this.showError(data.detail || 'Login failed');
+                    }
+                } catch (error) {
+                    this.showError('Network error: ' + error.message);
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async register() {
+                const username = document.getElementById('register-username').value;
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+
+                if (!username || !email || !password) {
+                    this.showError('Please fill in all fields');
+                    return;
+                }
+
+                this.showLoading(true);
+                try {
+                    const response = await fetch('/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, email, password })
+                    });
+
+                    const data = await response.json();
+                    if (response.ok) {
+                        this.token = data.access_token;
+                        localStorage.setItem('omniscope_token', this.token);
+                        this.showMainApp();
+                        this.loadSubscriptionStatus();
+                    } else {
+                        this.showError(data.detail || 'Registration failed');
+                    }
+                } catch (error) {
+                    this.showError('Network error: ' + error.message);
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            logout() {
+                this.token = null;
+                localStorage.removeItem('omniscope_token');
+                this.showAuthSection();
+                this.clearForms();
+            }
+
+            clearForms() {
+                ['login-username', 'login-password', 'register-username', 'register-email', 'register-password'].forEach(id => {
+                    document.getElementById(id).value = '';
+                });
+            }
+
+            async loadSubscriptionStatus() {
+                try {
+                    const response = await fetch('/subscription/status', {
+                        headers: { 'Authorization': `Bearer ${this.token}` }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.updateSubscriptionUI(data);
+                    } else if (response.status === 401) {
+                        this.logout();
+                    }
+                } catch (error) {
+                    console.error('Failed to load subscription status:', error);
+                }
+            }
+
+            updateSubscriptionUI(data) {
+                const statusEl = document.getElementById('subscription-status');
+                const messageEl = document.getElementById('subscription-message');
+                const actionsEl = document.getElementById('subscription-actions');
+
+                statusEl.textContent = data.status.toUpperCase();
+                messageEl.textContent = data.message;
+
+                // Color code the status
+                statusEl.className = `px-3 py-1 rounded text-sm ${
+                    data.status === 'active' || data.status === 'owner' ? 'bg-green-600' :
+                    data.status === 'expired' ? 'bg-red-600' : 'bg-yellow-600'
+                }`;
+
+                // Show/hide action buttons
+                if (data.status === 'active' && data.status !== 'owner') {
+                    actionsEl.classList.remove('hidden');
+                } else {
+                    actionsEl.classList.add('hidden');
+                }
+            }
+
+            async renewSubscription() {
+                this.showLoading(true);
+                try {
+                    const response = await fetch('/subscription/renew', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${this.token}` }
+                    });
+
+                    const data = await response.json();
+                    if (response.ok) {
+                        this.loadSubscriptionStatus();
+                        alert('Subscription renewed successfully!');
+                    } else {
+                        this.showError(data.detail || 'Failed to renew subscription');
+                    }
+                } catch (error) {
+                    this.showError('Network error: ' + error.message);
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async cancelSubscription() {
+                if (confirm('Are you sure you want to cancel your subscription?')) {
+                    this.showLoading(true);
+                    try {
+                        const response = await fetch('/subscription/cancel', {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${this.token}` }
+                        });
+
+                        const data = await response.json();
+                        if (response.ok) {
+                            this.loadSubscriptionStatus();
+                            alert('Subscription cancelled successfully!');
+                        } else {
+                            this.showError(data.detail || 'Failed to cancel subscription');
+                        }
+                    } catch (error) {
+                        this.showError('Network error: ' + error.message);
+                    } finally {
+                        this.showLoading(false);
+                    }
+                }
+            }
+
+            async solveTask() {
+                const bot = document.getElementById('bot-select').value;
+                const task = document.getElementById('task-input').value;
+
+                if (!task.trim()) {
+                    this.showError('Please enter a task');
+                    return;
+                }
+
+                this.showLoading(true);
+                document.getElementById('result-section').classList.add('hidden');
+
+                try {
+                    const response = await fetch('/solve', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.token}`
+                        },
+                        body: JSON.stringify({ bot, task })
+                    });
+
+                    const data = await response.json();
+                    if (response.ok) {
+                        document.getElementById('result-output').textContent = JSON.stringify(data, null, 2);
+                        document.getElementById('result-section').classList.remove('hidden');
+                    } else {
+                        if (response.status === 401) {
+                            this.logout();
+                        } else if (response.status === 403) {
+                            this.showError('Subscription required: ' + data.detail);
+                            this.loadSubscriptionStatus();
+                        } else {
+                            this.showError(data.detail || 'Request failed');
+                        }
+                    }
+                } catch (error) {
+                    this.showError('Network error: ' + error.message);
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            showLoading(show) {
+                document.getElementById('loading').classList.toggle('hidden', !show);
+            }
+
+            showError(message) {
+                document.getElementById('error-text').textContent = message;
+                document.getElementById('error-message').classList.remove('hidden');
+                setTimeout(() => {
+                    document.getElementById('error-message').classList.add('hidden');
+                }, 5000);
+            }
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new OmniScopeApp();
+        });
+    </script>
+</body>
+</html>
