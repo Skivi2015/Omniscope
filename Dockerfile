@@ -1,6 +1,1 @@
-FROM python:3.11-slim
-WORKDIR /app
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8080"]
+\nFROM python:3.10-slim\nWORKDIR /app\nCOPY requirements.txt ./\nRUN pip install --no-cache-dir -r requirements.txt\nCOPY . .\nENV PORT=8080\nCMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8080"]\n

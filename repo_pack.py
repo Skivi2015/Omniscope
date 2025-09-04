@@ -56,10 +56,80 @@ FILES = {
     # GitHub Actions: PyPI publish via Trusted Publishing\n    ".github/workflows/pypi-publish.yml": r'''\nname: Publish to PyPI\n\non:\n  release:\n    types: [published]\n\npermissions:\n  contents: read\n\nconcurrency:\n  group: pypi-${{ github.ref }}\n  cancel-in-progress: false\n\njobs:\n  build:\n    name: Build distributions\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-python@v5\n        with:\n          python-version: '3.11'\n          cache: 'pip'\n      - name: Install build backend\n        run: |\n          python -m pip install --upgrade pip\n          python -m pip install build\n      - name: Build sdist and wheel\n        run: python -m build\n      - name: Upload artifacts\n        uses: actions/upload-artifact@v4\n        with:\n          name: python-distributions\n          path: dist/*\n          if-no-files-found: error\n\n  publish:\n    name: Publish to PyPI\n    runs-on: ubuntu-latest\n    needs: build\n    permissions:\n      id-token: write   # required for Trusted Publishing\n      contents: read\n    environment:\n      name: pypi\n      # url: https://pypi.org/project/YOURPROJECT/\n    steps:\n      - name: Download artifacts\n        uses: actions/download-artifact@v4\n        with:\n          name: python-distributions\n          path: dist/\n      - name: Publish release distributions to PyPI\n        uses: pypa/gh-action-pypi-publish@release/v1\n        with:\n          packages-dir: dist/\n''',
 
     # GitHub Actions: Cloud Run deploy\n    ".github/workflows/python-publish.yml": r'''\nname: Deploy to Cloud Run\n\non:\n  push:\n    branches: ["main"]\n    paths:\n      - '**/*.py'\n      - 'Dockerfile'\n      - 'requirements.txt'\n      - 'bots.yaml'\n      - '.github/workflows/python-publish.yml'\n  workflow_dispatch: {}\n\npermissions:\n  contents: read\n  id-token: write   # Workload Identity Federation\n\nconcurrency:\n  group: cloudrun-${{ github.ref }}\n  cancel-in-progress: false\n\nenv:\n  SERVICE_NAME: ${{ vars.CLOUD_RUN_SERVICE }}\n  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}\n  REGION: ${{ secrets.GCP_REGION }}\n\njobs:\n  deploy:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n\n      - id: auth\n        uses: google-github-actions/auth@v2\n        with:\n          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}\n          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}\n\n      - uses: google-github-actions/setup-gcloud@v2\n        with:\n          project_id: ${{ env.PROJECT_ID }}\n\n      - name: Resolve defaults\n        run: |\n          REGION=${REGION:-us-central1}\n          SERVICE_NAME=${SERVICE_NAME:-omniscope}\n          echo "REGION=$REGION" >> $GITHUB_ENV\n          echo "SERVICE_NAME=$SERVICE_NAME" >> $GITHUB_ENV\n\n      - name: Build and push image with Cloud Build\n        run: |\n          IMAGE="gcr.io/${PROJECT_ID}/${SERVICE_NAME}:${GITHUB_SHA}"\n          gcloud builds submit --tag "$IMAGE" .\n          echo "IMAGE=$IMAGE" >> $GITHUB_ENV\n\n      - name: Deploy to Cloud Run\n        run: |\n          gcloud run deploy "$SERVICE_NAME" \n            --image "$IMAGE" \n            --region "$REGION" \n            --platform managed \n            --allow-unauthenticated\n\n      - name: Output Service URL\n        run: |\n          gcloud run services describe "$SERVICE_NAME" --region "$REGION" --format='value(status.url)'\n''',
-\n    # Tests\n    "tests/test_agent.py": r'''\nfrom scaling import build_agent\n\ndef test_http_rule():\n    a = build_agent("scouty", "skills/default.yaml")\n    out = a.solve("fetch https://httpbin.org/json and json parse")\n    assert out["transcript"], "no transcript"\n\ndef test_python_tool_simple_math():\n    a = build_agent("scouty", "skills/default.yaml")\n    out = a.solve("python result = 2 + 3")\n    assert out["result"].strip() == "5"\n\ndef test_json_tool_with_context():\n    a = build_agent("scouty", "skills/default.yaml")\n    out = a.solve("python result = '{\"a\": 1}'; json")\n    assert '"a": 1' in out["result"]\n''',
-\n    "tests/test_plugins.py": r'''\nfrom scaling import build_agent\n\ndef test_math_plugin_basic():\n    a = build_agent("scouty", "skills/default.yaml")\n    # math tool not registered by default, ensure graceful fallback\n    out = a.solve("calc 3*7")\n    assert out["transcript"], "no transcript"\n''',
-\n    "tests/test_planner.py": r'''\nfrom scaling import build_agent\n\ndef test_semicolon_step_split():\n    a = build_agent("scouty", "skills/default.yaml")\n    out = a.solve("python result = '{\"x\":1}'; json")\n    assert '"x": 1' in out["result"]\n''',
-\n    "tests/test_routing.py": r'''\nfrom scaling import build_agent\n\ndef test_default_route_python_when_unknown():\n    a = build_agent("scouty", "skills/default.yaml")\n    out = a.solve("compute 1+1")\n    assert out["transcript"], "no transcript"\n''',
-\n    "tests/test_skills_yaml.py": r'''\nimport yaml\n\ndef test_skills_yaml_parses():\n    with open("skills/default.yaml", "r", encoding="utf-8") as f:\n        doc = yaml.safe_load(f)\n    assert isinstance(doc, dict) and "rules" in doc and isinstance(doc["rules"], list) and len(doc["rules"]) > 0\n''',
-\n    "examples/tasks.txt": r'''\nfetch https://httpbin.org/json and json parse\npython result = 2 + 2\njson {"a": 1}\n''',
-}\n\ndef write_files(base: str = ".") -> None:\n    for rel, content in FILES.items():\n        path = Path(base) / rel\n        path.parent.mkdir(parents=True, exist_ok=True)\n        with open(path, "w", encoding="utf-8") as f:\n            f.write(content.strip() + ("\n" if not content.endswith("\n") else ""))\n\ndef main() -> None:\n    ap = argparse.ArgumentParser()\n    ap.add_argument("--init", action="store_true", help="write repo files to disk")\n    args = ap.parse_args()\n    if args.init:\n        write_files()\n        print("repo files written. next: `uvicorn server:app --reload --port 8080`. For Firebase see README.")\n    else:\n        print("no action. use --init to write files.")\nif __name__ == "__main__":\n    main()
+    # Tests
+    "tests/test_agent.py": r'''
+from scaling import build_agent
+
+def test_http_rule():
+    a = build_agent("scouty", "skills/default.yaml")
+    out = a.solve("fetch https://httpbin.org/json and json parse")
+    assert out["transcript"], "no transcript"
+
+def test_python_tool_simple_math():
+    a = build_agent("scouty", "skills/default.yaml")
+    out = a.solve("python result = 2 + 3")
+    assert out["result"].strip() == "5"
+
+def test_json_tool_with_context():
+    a = build_agent("scouty", "skills/default.yaml")
+    out = a.solve("python result = '{"a": 1}'; json")
+    assert '"a": 1' in out["result"]
+''',
+    "tests/test_plugins.py": r'''
+from scaling import build_agent
+
+def test_math_plugin_basic():
+    a = build_agent("scouty", "skills/default.yaml")
+    # math tool not registered by default, ensure graceful fallback
+    out = a.solve("calc 3*7")
+    assert out["transcript"], "no transcript"
+''',
+    "tests/test_planner.py": r'''
+from scaling import build_agent
+
+def test_semicolon_step_split():
+    a = build_agent("scouty", "skills/default.yaml")
+    out = a.solve("python result = '{"x":1}'; json")
+    assert '"x": 1' in out["result"]
+''',
+    "tests/test_routing.py": r'''
+from scaling import build_agent
+
+def test_default_route_python_when_unknown():
+    a = build_agent("scouty", "skills/default.yaml")
+    out = a.solve("compute 1+1")
+    assert out["transcript"], "no transcript"
+''',
+    "tests/test_skills_yaml.py": r'''
+import yaml
+
+def test_skills_yaml_parses():
+    with open("skills/default.yaml", "r", encoding="utf-8") as f:
+        doc = yaml.safe_load(f)
+    assert isinstance(doc, dict) and "rules" in doc and isinstance(doc["rules"], list) and len(doc["rules"]) > 0
+''',
+    "examples/tasks.txt": r'''
+fetch https://httpbin.org/json and json parse
+python result = 2 + 2
+json {"a": 1}
+''',
+}
+
+def write_files(base: str = ".") -> None:
+    for rel, content in FILES.items():
+        path = Path(base) / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(content.strip() + ("\n" if not content.endswith("\n") else ""))
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--init", action="store_true", help="write repo files to disk")
+    args = ap.parse_args()
+    if args.init:
+        write_files()
+        print("repo files written. next: `uvicorn server:app --reload --port 8080`. For Firebase see README.")
+    else:
+        print("no action. use --init to write files.")
+if __name__ == "__main__":
+    main()

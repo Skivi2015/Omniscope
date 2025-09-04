@@ -1,12 +1,1 @@
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "module": "ES2020",
-    "moduleResolution": "Node",
-    "outDir": "lib",
-    "rootDir": "src",
-    "esModuleInterop": true,
-    "strict": true
-  },
-  "include": ["src"]
-}
+\n{\n  "compilerOptions": {\n    "target": "ES2020",\n    "module": "ES2020",\n    "moduleResolution": "Node",\n    "outDir": "lib",\n    "rootDir": "src",\n    "esModuleInterop": true,\n    "strict": true\n  },\n  "include": ["src"]\n}\n

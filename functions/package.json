@@ -1,16 +1,1 @@
-{
-  "name": "omniscope-functions",
-  "private": true,
-  "type": "module",
-  "engines": {"node": "18"},
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "deploy": "firebase deploy --only functions"
-  },
-  "dependencies": {
-    "firebase-admin": "^11.10.1",
-    "firebase-functions": "^4.4.1",
-    "cross-fetch": "^3.1.8"
-  },
-  "devDependencies": {"typescript": "^5.4.0"}
-}
+\n{\n  "name": "omniscope-functions",\n  "private": true,\n  "type": "module",\n  "engines": {"node": "18"},\n  "scripts": {\n    "build": "tsc -p tsconfig.json",\n    "deploy": "firebase deploy --only functions"\n  },\n  "dependencies": {\n    "firebase-admin": "^11.10.1",\n    "firebase-functions": "^4.4.1",\n    "cross-fetch": "^3.1.8"\n  },\n  "devDependencies": {"typescript": "^5.4.0"}\n}\n
