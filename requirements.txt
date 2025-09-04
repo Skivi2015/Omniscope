@@ -1,3 +1,5 @@
 fastapi
 uvicorn[standard]
 PyYAML
+# Optional: Uncomment for Firebase ID token validation
+# firebase-admin

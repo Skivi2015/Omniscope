@@ -1,13 +1,358 @@
 <!DOCTYPE html>
-<html><body>
-<h2>OmniScope Bot Demo</h2>
-<input id='bot' value='scouty'> <input id='task' value='fetch https://httpbin.org/json and json parse'>
-<button onclick='solve()'>Solve</button>
-<pre id='result'></pre>
-<script>
-function solve() {
-  fetch('/solve', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bot:bot.value,task:task.value})})
-  .then(r=>r.json()).then(d=>result.textContent=JSON.stringify(d,null,2))
-}
-</script>
-</body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OmniScope Bot Demo</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .auth-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+    .login-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .auth-btn {
+      flex: 1;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .google-btn {
+      background: #4285f4;
+      color: white;
+    }
+    .google-btn:hover { background: #3367d6; }
+    .facebook-btn {
+      background: #1877f2;
+      color: white;
+    }
+    .facebook-btn:hover { background: #166fe5; }
+    .logout-btn {
+      background: #dc3545;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .logout-btn:hover { background: #c82333; }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+    .user-details h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+    .user-details p {
+      margin: 5px 0 0 0;
+      font-size: 14px;
+      color: #666;
+    }
+    .bot-section {
+      margin-bottom: 20px;
+    }
+    .bot-section label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+    .input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    input[type="text"], textarea {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+    .solve-btn {
+      background: #28a745;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      width: 100%;
+    }
+    .solve-btn:hover { background: #218838; }
+    .solve-btn:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+    }
+    #result {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      font-family: 'Monaco', 'Consolas', monospace;
+      font-size: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .loading {
+      color: #007bff;
+    }
+    .error {
+      color: #dc3545;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>OmniScope Bot Demo</h2>
+    
+    <!-- Authentication Section -->
+    <div class="auth-section">
+      <div id="loginSection">
+        <h3>Login to access bots</h3>
+        <p>Sign in with your preferred provider to use OmniScope agents:</p>
+        <div class="login-buttons">
+          <button id="googleLogin" class="auth-btn google-btn">
+            📧 Login with Google
+          </button>
+          <button id="facebookLogin" class="auth-btn facebook-btn">
+            📘 Login with Facebook
+          </button>
+        </div>
+      </div>
+      
+      <div id="userSection" style="display: none;">
+        <div class="user-info">
+          <img id="userAvatar" class="user-avatar" src="" alt="User Avatar">
+          <div class="user-details">
+            <h3 id="userName"></h3>
+            <p id="userEmail"></p>
+          </div>
+          <button id="logoutBtn" class="logout-btn">Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bot Interface Section -->
+    <div id="botInterface" style="display: none;">
+      <div class="bot-section">
+        <label for="bot">Bot Agent:</label>
+        <input type="text" id="bot" value="scouty" placeholder="Enter bot name (e.g., scouty, seomi, soshie)">
+      </div>
+      
+      <div class="bot-section">
+        <label for="task">Task:</label>
+        <textarea id="task" placeholder="Describe what you want the bot to do...">fetch https://httpbin.org/json and json parse</textarea>
+      </div>
+      
+      <button id="solveBtn" class="solve-btn" onclick="solve()">
+        🤖 Execute Task
+      </button>
+      
+      <pre id="result"></pre>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    // Import Firebase SDK
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { 
+      getAuth, 
+      signInWithPopup, 
+      GoogleAuthProvider, 
+      FacebookAuthProvider,
+      onAuthStateChanged, 
+      signOut 
+    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+    // Firebase configuration (you'll need to replace this with your actual config)
+    const firebaseConfig = {
+      apiKey: "your-api-key",
+      authDomain: "your-project.firebaseapp.com",
+      projectId: "your-project-id",
+      storageBucket: "your-project.appspot.com",
+      messagingSenderId: "123456789",
+      appId: "your-app-id"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // Auth providers
+    const googleProvider = new GoogleAuthProvider();
+    const facebookProvider = new FacebookAuthProvider();
+
+    // Global variables
+    let currentUser = null;
+
+    // DOM elements
+    const loginSection = document.getElementById('loginSection');
+    const userSection = document.getElementById('userSection');
+    const botInterface = document.getElementById('botInterface');
+    const userName = document.getElementById('userName');
+    const userEmail = document.getElementById('userEmail');
+    const userAvatar = document.getElementById('userAvatar');
+    const resultDiv = document.getElementById('result');
+
+    // Auth state listener
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+        showUserInterface(user);
+      } else {
+        currentUser = null;
+        showLoginInterface();
+      }
+    });
+
+    // Google login
+    document.getElementById('googleLogin').addEventListener('click', async () => {
+      try {
+        const result = await signInWithPopup(auth, googleProvider);
+        console.log('Google login successful:', result.user);
+      } catch (error) {
+        console.error('Google login error:', error);
+        showError('Google login failed: ' + error.message);
+      }
+    });
+
+    // Facebook login
+    document.getElementById('facebookLogin').addEventListener('click', async () => {
+      try {
+        const result = await signInWithPopup(auth, facebookProvider);
+        console.log('Facebook login successful:', result.user);
+      } catch (error) {
+        console.error('Facebook login error:', error);
+        showError('Facebook login failed: ' + error.message);
+      }
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      try {
+        await signOut(auth);
+        console.log('User signed out');
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
+    });
+
+    // Show user interface
+    function showUserInterface(user) {
+      loginSection.style.display = 'none';
+      userSection.style.display = 'block';
+      botInterface.style.display = 'block';
+      
+      userName.textContent = user.displayName || 'Anonymous User';
+      userEmail.textContent = user.email || '';
+      userAvatar.src = user.photoURL || 'https://via.placeholder.com/40x40?text=👤';
+    }
+
+    // Show login interface
+    function showLoginInterface() {
+      loginSection.style.display = 'block';
+      userSection.style.display = 'none';
+      botInterface.style.display = 'none';
+      resultDiv.textContent = '';
+    }
+
+    // Show error message
+    function showError(message) {
+      resultDiv.textContent = message;
+      resultDiv.className = 'error';
+    }
+
+    // Solve function (global scope)
+    window.solve = async function() {
+      if (!currentUser) {
+        showError('Please login first to use the bot functionality.');
+        return;
+      }
+
+      const bot = document.getElementById('bot').value;
+      const task = document.getElementById('task').value;
+      const solveBtn = document.getElementById('solveBtn');
+
+      if (!bot || !task) {
+        showError('Please enter both bot name and task.');
+        return;
+      }
+
+      try {
+        solveBtn.disabled = true;
+        resultDiv.textContent = 'Processing...';
+        resultDiv.className = 'loading';
+
+        // Get user ID token for backend validation (optional)
+        const idToken = await currentUser.getIdToken();
+
+        const response = await fetch('/solve', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          },
+          body: JSON.stringify({
+            bot: bot,
+            task: task,
+            user: {
+              uid: currentUser.uid,
+              email: currentUser.email,
+              displayName: currentUser.displayName
+            }
+          })
+        });
+
+        const data = await response.json();
+        resultDiv.textContent = JSON.stringify(data, null, 2);
+        resultDiv.className = '';
+      } catch (error) {
+        console.error('Solve error:', error);
+        showError('Error: ' + error.message);
+      } finally {
+        solveBtn.disabled = false;
+      }
+    };
+  </script>
+</body>
+</html>

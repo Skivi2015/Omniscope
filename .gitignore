@@ -32,3 +32,28 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+*.egg-info/
+
+# Node.js
+node_modules/
+npm-debug.log
+
+# Firebase
+.firebase/
+firebase-debug.log
+
+# IDE
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
